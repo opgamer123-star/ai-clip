@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="hi"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Auto Clipper</title>
+<link rel="manifest" href="data:application/json,%7B%22name%22%3A%22Auto%20Clipper%22%2C%22display%22%3A%22standalone%22%2C%22start_url%22%3A%22%2F%22%7D">
+<style>
+:root{--bg:#f3f1ec;--fg:#16181d;--mut:#5d636e;--card:#fff;--line:#d9d6ce;--acc:#ffd700;--on:#16181d}
+@media(prefers-color-scheme:dark){:root{--bg:#101216;--fg:#eceef2;--mut:#98a0ad;--card:#191c22;--line:#2a2e36}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.5 system-ui,sans-serif}
+main{max-width:640px;margin:0 auto;padding:24px 16px 64px}
+h1{font-size:1.9rem;margin:0 0 4px;letter-spacing:-.02em}p.s{color:var(--mut);margin:0 0 20px}
+.box{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px;display:grid;gap:12px}
+label{display:grid;gap:4px;font-size:.9rem;color:var(--mut)}
+input,select{font:inherit;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:10px;width:100%}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+button{font:inherit;font-weight:600;background:var(--acc);color:var(--on);border:0;border-radius:6px;padding:12px;cursor:pointer}
+button:disabled{opacity:.5}:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+#st{margin-top:16px;display:none}.bar{height:8px;background:var(--line);border-radius:4px;overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:var(--acc);transition:width .4s}
+#err{color:#d33}#out{display:grid;gap:16px;margin-top:20px}
+.clip{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px}
+video{width:100%;max-height:70vh;background:#000;border-radius:6px}
+.clip a{display:inline-block;margin-top:8px;font-weight:600;color:var(--fg)}
+</style></head><body><main>
+<h1>Auto Clipper</h1><p class="s">Link ya video daalo. Captions wale vertical clips ban ke aayenge.</p>
+<div class="box">
+<label>Video link<input id="url" type="url" placeholder="https://youtube.com/..."></label>
+<label>Ya video file upload karo (link fail ho to ye use karo)<input id="file" type="file" accept="video/*"></label>
+<div class="row">
+<label>Kitne clips<select id="n"><option>3</option><option selected>5</option><option>8</option></select></label>
+<label>Clip length<select id="len"><option value="15,30">15-30 sec</option><option value="20,45" selected>20-45 sec</option><option value="30,60">30-60 sec</option></select></label></div>
+<label>Format<select id="mode"><option value="blur">Poori video, blur background</option><option value="crop">Center crop (zoomed)</option></select></label>
+<label>Access code (agar lagaya ho)<input id="code" type="password"></label>
+<button id="go">Clips banao</button></div>
+<div id="st"><div class="bar"><i id="pb"></i></div><p id="msg"></p><p id="err"></p></div>
+<div id="out"></div></main>
+<script>
+const $=i=>document.getElementById(i);try{$("code").value=localStorage.code||""}catch(e){}
+$("go").onclick=async()=>{
+ const fd=new FormData(),[a,b]=$("len").value.split(",");
+ fd.append("url",$("url").value);fd.append("n",$("n").value);fd.append("minlen",a);fd.append("maxlen",b);
+ fd.append("mode",$("mode").value);fd.append("code",$("code").value);
+ if($("file").files[0])fd.append("file",$("file").files[0]);
+ try{localStorage.code=$("code").value}catch(e){}
+ $("go").disabled=true;$("out").innerHTML="";$("err").textContent="";$("st").style.display="block";$("msg").textContent="Upload ho raha hai";$("pb").style.width="2%";
+ const r=await fetch("/api/jobs",{method:"POST",body:fd});
+ if(!r.ok){$("err").textContent=(await r.json()).detail||"Error";$("go").disabled=false;return}
+ const {id}=await r.json();
+ const t=setInterval(async()=>{
+  const s=await (await fetch("/api/jobs/"+id)).json();
+  $("msg").textContent=s.msg;$("pb").style.width=s.pct+"%";
+  if(s.status=="error"){clearInterval(t);$("err").textContent=s.msg;$("go").disabled=false}
+  if(s.status=="done"){clearInterval(t);$("go").disabled=false;
+   $("out").innerHTML=s.clips.map(c=>`<div class="clip"><video src="${c.url}" controls playsinline preload="metadata"></video><b>${c.title.replace(/</g,"&lt;")}</b><br><small>Score ${c.score}</small><br><a href="${c.url}" download>Download</a></div>`).join("")}
+ },2500)};
+</script></body></html>
