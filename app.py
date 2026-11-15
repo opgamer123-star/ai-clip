@@ -24,13 +24,7 @@ def upd(j, msg, pct): JOBS[j].update(msg=msg, pct=pct)
 
 def get_video(j, d, url, uploaded):
     if uploaded: return uploaded
-    upd(j, "Link se video download ho raha hai", 5)
-    try:
-        run(["yt-dlp", "-f", "bv*[height<=720]+ba/b[height<=720]/b", "--merge-output-format", "mp4",
-             "--no-playlist", "-o", str(d / "src.%(ext)s"), url])
-    except Exception:
-        raise RuntimeError("Link download nahi hua (server ko block kiya gaya). Video file upload karo.")
-    return next(d.glob("src.*"))
+    raise RuntimeError("Is version mein link download band hai. Video file upload karo.")
 
 def transcribe(j, d, src):
     if not GROQ: raise RuntimeError("GROQ_API_KEY set nahi hai")
