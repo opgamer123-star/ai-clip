@@ -21,28 +21,41 @@ button:disabled{opacity:.5}:focus-visible{outline:3px solid var(--acc);outline-o
 #err{color:#d33}#out{display:grid;gap:16px;margin-top:20px}
 .clip{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px}
 video{width:100%;max-height:70vh;background:#000;border-radius:6px}
+.meta{white-space:pre-wrap;margin:8px 0;font:inherit;color:var(--mut)}.cp,[data-p]{background:var(--bg);color:var(--fg);border:1px solid var(--line);padding:8px 10px}
 .clip a,#out>a{display:inline-block;margin-top:8px;font-weight:600;color:var(--fg)}
 </style></head><body><main>
 <h1>Auto Clipper</h1><p class="s">Video upload karo. Captions wale clips ban ke aayenge.</p>
 <div class="box">
+<div class="row"><button type="button" data-p="gta">GTA 6 preset</button><button type="button" data-p="talk">Stream / Podcast preset</button></div>
 <label>Video file<input id="file" type="file" accept="video/*"></label>
+<label>Aapko kaise clips chahiye? (optional)<input id="prompt" maxlength="300" placeholder="Jaise: sirf funny moments, ya jahan release date ki baat ho"></label>
+<label>Hook text, har clip ke upar (optional)<input id="hooktext" maxlength="60" placeholder="Jaise: GTA 6 NEW TRAILER"></label>
 <div class="row" id="main"></div>
 <details><summary>Aur options (format, captions, effects)</summary><div class="row" id="adv"></div>
 <div class="row"><label class="chk"><input id="hook" type="checkbox" checked>Upar hook title</label>
-<label class="chk"><input id="zoom" type="checkbox">Slow zoom effect</label></div></details>
+<label class="chk"><input id="zoom" type="checkbox">Slow zoom effect</label>
+<label class="chk"><input id="bar" type="checkbox">Progress bar</label></div></details>
 <label>Access code (agar lagaya ho)<input id="code" type="password"></label>
 <button id="go">Clips banao</button></div>
 <div id="st"><div class="bar"><i id="pb"></i></div><p id="msg"></p><p id="err"></p></div>
 <div id="out"></div></main>
 <script>
 const $=i=>document.getElementById(i),sl=ms=>new Promise(r=>setTimeout(r,ms));
-const MAIN=[["n","Kitne clips",[[3,"3"],[5,"5"],[8,"8"],[10,"10"]],5],["len","Clip length",[["15,30","15-30 sec"],["20,45","20-45 sec"],["30,60","30-60 sec"],["45,90","45-90 sec"]],"20,45"],
+const MAIN=[["kind","Video type",[["talk","Bolne wali (stream, podcast)"],["game","Gameplay / Trailer (GTA 6)"]],"talk"],["n","Kitne clips",[[3,"3"],[5,"5"],[8,"8"],[10,"10"]],5],["len","Clip length",[["15,30","15-30 sec"],["20,45","20-45 sec"],["30,60","30-60 sec"],["45,90","45-90 sec"]],"20,45"],
 ["style","Kaise clips chunein",[["viral","Viral / hook wale"],["funny","Funny"],["insight","Useful baatein"],["news","News / announcements"]],"viral"],["aspect","Format",[["9:16","Vertical 9:16 (Shorts/Reels)"],["1:1","Square 1:1"],["4:5","Portrait 4:5"],["16:9","Wide 16:9"]],"9:16"]];
 const ADV=[["layout","Video fit",[["blur","Poori video + blur"],["crop","Center crop"]],"blur"],["res","Quality",[[480,"480p (fast)"],[720,"720p"],[1080,"1080p (slow)"]],720],
 ["cap","Caption style",[["gold","Bold + peela highlight"],["white","Sirf white"],["box","Box ke andar"],["none","Captions nahi"]],"gold"],["pos","Caption jagah",[["bottom","Neeche"],["center","Beech"],["top","Upar"]],"bottom"],
-["wpl","Ek baar mein shabd",[[1,"1"],[2,"2"],[3,"3"],[4,"4"]],3]];
+["wpl","Ek baar mein shabd",[[1,"1"],[2,"2"],[3,"3"],[4,"4"]],3],["letters","Caption letters",[["upper","BADE (UPPERCASE)"],["normal","Normal"]],"upper"],["hl","Highlight colour",[["gold","Peela"],["green","Hara"],["red","Laal"],["cyan","Cyan"]],"gold"],["size","Caption size",[["s","Chhota"],["m","Medium"],["l","Bada"]],"m"],["script","Caption script",[["auto","Jaisa bola gaya"],["roman","Hinglish (Roman) try karo"]],"auto"]];
 const mk=(a,box)=>a.forEach(([id,l,o,d])=>{box.insertAdjacentHTML("beforeend",`<label>${l}<select id="${id}">${o.map(([v,t])=>`<option value="${v}"${v==d?" selected":""}>${t}</option>`).join("")}</select></label>`)});
-mk(MAIN,$("main"));mk(ADV,$("adv"));try{$("code").value=localStorage.code||""}catch(e){}
+mk(MAIN,$("main"));mk(ADV,$("adv"));
+const IDS=[...MAIN,...ADV].map(a=>a[0]).concat(["prompt","hooktext"]);
+const save=()=>{try{localStorage.s=JSON.stringify(Object.fromEntries(IDS.map(k=>[k,$(k).value])))}catch(e){}};
+try{const s=JSON.parse(localStorage.s||"{}");IDS.forEach(k=>{if(s[k]!=null)$(k).value=s[k]})}catch(e){}
+document.addEventListener("change",save);
+const PRE={gta:{kind:"game",aspect:"9:16",res:720,layout:"blur",n:5,len:"20,45"},talk:{kind:"talk",cap:"gold",letters:"upper",wpl:2,n:5}};
+document.querySelectorAll("[data-p]").forEach(b=>b.onclick=()=>{Object.entries(PRE[b.dataset.p]).forEach(([k,v])=>$(k).value=v);$("zoom").checked=$("bar").checked=b.dataset.p=="gta";save()});
+$("out").onclick=e=>{const b=e.target.closest(".cp");if(b){navigator.clipboard.writeText(decodeURIComponent(b.dataset.t));b.textContent="Copy ho gaya"}};
+try{$("code").value=localStorage.code||""}catch(e){}
 async function upload(file,code){
  const f=new FormData();f.append("name",file.name);f.append("code",code);
  const r=await fetch("/api/upload/init",{method:"POST",body:f});
@@ -60,14 +73,14 @@ $("go").onclick=async()=>{
  try{
   const id=await upload(file,$("code").value),fd=new FormData(),[a,b]=$("len").value.split(",");
   fd.append("upload_id",id);fd.append("minlen",a);fd.append("maxlen",b);fd.append("code",$("code").value);
-  ["n","style","aspect","layout","res","cap","pos","wpl"].forEach(k=>fd.append(k,$(k).value));
-  fd.append("hook",$("hook").checked?1:0);fd.append("zoom",$("zoom").checked?1:0);
+  ["n","style","aspect","layout","res","cap","pos","wpl","letters","hl","size","script"].forEach(k=>fd.append(k,$(k).value));
+  fd.append("prompt",$("prompt").value);fd.append("hooktext",$("hooktext").value);fd.append("kind",$("kind").value);fd.append("hook",$("hook").checked?1:0);fd.append("zoom",$("zoom").checked?1:0);fd.append("bar",$("bar").checked?1:0);
   const r=await fetch("/api/jobs",{method:"POST",body:fd});
   if(!r.ok)throw new Error((await r.json()).detail||"Job shuru nahi hua");
   for(;;){await sl(2500);const s=await (await fetch("/api/jobs/"+id)).json();
    $("msg").textContent=s.msg;$("pb").style.width=s.pct+"%";
    if(s.status=="error")throw new Error(s.msg);
-   if(s.status=="done"){$("out").innerHTML=s.clips.map(c=>`<div class="clip"><video src="${c.url}" controls playsinline preload="metadata"></video><b>${c.title.replace(/</g,"&lt;")}</b><br><small>Score ${c.score}</small><br><a href="${c.url}" download>Download</a></div>`).join("")+`<a href="/api/jobs/${id}/zip">Sab clips ZIP mein download karo</a>`;break}}
+   if(s.status=="done"){$("out").innerHTML=s.clips.map(c=>`<div class="clip"><video src="${c.url}" controls playsinline preload="metadata"></video><b>${c.title.replace(/</g,"&lt;")}</b><br><small>Score ${c.score}</small><br>${c.meta?`<pre class="meta">${c.meta.replace(/</g,"&lt;")}</pre><button class="cp" data-t="${encodeURIComponent(c.meta)}">Title aur hashtags copy karo</button><br>`:""}<a href="${c.url}" download>Download</a></div>`).join("")+`<a href="/api/jobs/${id}/zip">Sab clips ZIP mein download karo</a>`;break}}
  }catch(e){$("err").textContent=e.message}
  $("go").disabled=false};
 </script></body></html>
