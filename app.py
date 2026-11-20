@@ -477,7 +477,8 @@ def make_ass(words, c, path, o):
         ev.append(f"Dialogue: 1,{ts(0)},{ts(min(3.5, end - start))},H,,0,0,0,,{{\\fscx88\\fscy88\\t(0,120,\\fscx100\\fscy100)}}{t}")
     ot = c.get("outro") or o["outro"]
     if ot:
-        ev.append(f"Dialogue: 2,{ts(max(0, end - start - 2.5))},{ts(end - start)},O,,0,0,0,,{re.sub(r'[{}\\\n]', ' ', ot)}")
+        ots = re.sub(r"[{}\\\n]", " ", ot)
+        ev.append(f"Dialogue: 2,{ts(max(0, end - start - 2.5))},{ts(end - start)},O,,0,0,0,,{ots}")
     if o["credit"]:
         ev.append(f"Dialogue: 0,{ts(0)},{ts(end - start)},C,,0,0,0,,{o['credit']}")
     ws = [{"t": clean(w["w"]), "s": w["s"], "e": w["e"]} for w in words if w["s"] >= start - 0.05 and w["e"] <= end + 0.05] if cap != "none" else []
