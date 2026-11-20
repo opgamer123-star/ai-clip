@@ -1,64 +1,146 @@
 <!doctype html>
 <html lang="hi"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Auto Clipper</title>
-<link rel="manifest" href="data:application/json,%7B%22name%22%3A%22Auto%20Clipper%22%2C%22display%22%3A%22standalone%22%2C%22start_url%22%3A%22%2F%22%7D">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0d0e12">
+<title>Clipper</title>
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/static/icon-192.png">
 <style>
-:root{--bg:#f3f1ec;--fg:#16181d;--mut:#5d636e;--card:#fff;--line:#d9d6ce;--acc:#ffd700;--on:#16181d}
-@media(prefers-color-scheme:dark){:root{--bg:#101216;--fg:#eceef2;--mut:#98a0ad;--card:#191c22;--line:#2a2e36}}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.5 system-ui,sans-serif}
-main{max-width:640px;margin:0 auto;padding:24px 16px 64px}
-h1{font-size:1.9rem;margin:0 0 4px;letter-spacing:-.02em}p.s{color:var(--mut);margin:0 0 20px}
-.box{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px;display:grid;gap:12px}
-label{display:grid;gap:4px;font-size:.9rem;color:var(--mut)}
-input,select{font:inherit;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:10px;width:100%}
-.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}.chk{display:flex;gap:8px;align-items:center}.chk input{width:auto}
-details summary{cursor:pointer;font-weight:600}details .row{margin-top:12px}
-button{font:inherit;font-weight:600;background:var(--acc);color:var(--on);border:0;border-radius:6px;padding:12px;cursor:pointer}
-button:disabled{opacity:.5}:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
-#st{margin-top:16px;display:none}.bar{height:8px;background:var(--line);border-radius:4px;overflow:hidden}
-.bar i{display:block;height:100%;width:0;background:var(--acc);transition:width .4s}
-#err{color:#d33}#out{display:grid;gap:16px;margin-top:20px}
-.clip{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px}
-video{width:100%;max-height:70vh;background:#000;border-radius:6px}
-.meta{white-space:pre-wrap;margin:8px 0;font:inherit;color:var(--mut)}.cp,[data-p]{background:var(--bg);color:var(--fg);border:1px solid var(--line);padding:8px 10px}
-.clip a,#out>a{display:inline-block;margin-top:8px;font-weight:600;color:var(--fg)}
+:root{--bg:#f4f2ed;--fg:#14161b;--mut:#626874;--card:#fff;--line:#dcd9d1;--acc:#ffd400;--on:#14161b;--soft:#ebe8e0;--err:#c8321f}
+@media(prefers-color-scheme:dark){:root{--bg:#0d0e12;--fg:#eef0f4;--mut:#9aa1ae;--card:#16181e;--line:#262a33;--soft:#1d2028;--err:#ff6b57}}
+*{box-sizing:border-box}html{scroll-padding-bottom:90px}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;-webkit-text-size-adjust:100%}
+main{max-width:760px;margin:0 auto;padding:max(20px,env(safe-area-inset-top)) 16px 120px}
+header{display:flex;align-items:center;gap:12px;margin:8px 0 22px}
+.logo{width:42px;height:42px;border-radius:11px;background:var(--acc);display:grid;place-items:center;color:var(--on)}
+h1{font-size:1.7rem;line-height:1.1;margin:0;letter-spacing:-.03em}header p{margin:2px 0 0;color:var(--mut);font-size:.92rem}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px;display:grid;gap:12px}
+.step{display:flex;align-items:center;gap:10px;font-weight:700;letter-spacing:-.01em}
+.step b{width:24px;height:24px;border-radius:50%;background:var(--acc);color:var(--on);display:grid;place-items:center;font-size:.8rem}
+label{display:grid;gap:5px;font-size:.85rem;color:var(--mut);font-weight:500}
+input,select,textarea{font:inherit;color:var(--fg);background:var(--soft);border:1px solid transparent;border-radius:9px;padding:11px 12px;width:100%;min-height:44px}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--acc)}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}@media(max-width:420px){.row{grid-template-columns:1fr}}
+.seg{display:grid;grid-template-columns:1fr 1fr;background:var(--soft);border-radius:10px;padding:4px;gap:4px}
+.seg button,.chips button{font:inherit;font-weight:600;border:0;border-radius:7px;padding:10px;background:transparent;color:var(--mut);cursor:pointer;min-height:42px}
+.seg button[aria-pressed=true]{background:var(--card);color:var(--fg);box-shadow:0 1px 3px #0003}
+.chips{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}#fpre{grid-template-columns:repeat(4,1fr)}#fpre button{font-size:.78rem;padding:8px 2px}
+#pv{position:relative;aspect-ratio:16/9;background:#000;border-radius:10px;overflow:hidden}#pv video,#pv img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}#pv img{display:none}
+#fbox{position:absolute;border:2px solid #ff2d8a;background:#ff2d8a33;pointer-events:none}#fcard input[type=range]{padding:0;min-height:30px;background:transparent}
+.chips button{background:var(--soft);color:var(--fg);padding:10px 6px;font-size:.88rem;line-height:1.25;border:1px solid transparent}
+.chips button[aria-pressed=true]{border-color:var(--acc);box-shadow:inset 0 0 0 1px var(--acc)}
+.ok{color:#2e9e4f}.no{color:var(--err)}.hl{display:grid;gap:6px;margin:0;padding:0;list-style:none;font-size:.9rem}.hint{font-size:.82rem;color:var(--mut);margin:0}
+.chk{display:flex;gap:8px;align-items:center;font-size:.9rem;color:var(--fg)}.chk input{width:auto;min-height:0}
+details summary{cursor:pointer;font-weight:600;padding:4px 0}details[open] summary{margin-bottom:10px}
+.cta{position:fixed;left:0;right:0;bottom:0;padding:12px 16px max(12px,env(safe-area-inset-bottom));background:linear-gradient(transparent,var(--bg) 35%);display:flex;justify-content:center;z-index:5}
+.cta button{max-width:728px;width:100%;box-shadow:0 6px 24px #0004}
+button.p{font:inherit;font-weight:700;font-size:1.05rem;background:var(--acc);color:var(--on);border:0;border-radius:12px;padding:15px;cursor:pointer}
+button.p:disabled{opacity:.55}.ghost{font:inherit;font-weight:600;background:var(--soft);color:var(--fg);border:0;border-radius:9px;padding:10px 12px;cursor:pointer;min-height:42px}
+:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+#st{display:none}.bar{height:10px;background:var(--soft);border-radius:6px;overflow:hidden}.bar i{display:block;height:100%;width:0;background:var(--acc);transition:width .5s}
+#msg{margin:0;font-weight:600}#err{margin:0;color:var(--err)}
+#out{display:grid;gap:26px;margin-top:20px}.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:14px}.jh{font-size:1rem;margin:0 0 6px;word-break:break-all}.hb{text-align:left}
+.clip{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;display:grid;gap:9px;align-content:start}
+video{width:100%;max-height:68vh;background:#000;border-radius:9px}
+.tags{display:flex;gap:6px;flex-wrap:wrap}.tags span{font-size:.75rem;background:var(--soft);padding:3px 8px;border-radius:20px;color:var(--mut)}
+.clip h3{margin:0;font-size:1rem;letter-spacing:-.01em}.meta{white-space:pre-wrap;margin:0;font:inherit;font-size:.88rem;color:var(--mut)}
+.acts{display:flex;gap:8px;flex-wrap:wrap}.acts a{text-decoration:none}
+.acts a.p{padding:10px 14px;font-size:.95rem}
+.tools{margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;align-items:center}.tools a{color:var(--fg);font-weight:600}
+.note{border-left:3px solid var(--acc);padding:4px 0 4px 12px;color:var(--mut);font-size:.88rem;margin:0}
 </style></head><body><main>
-<h1>Auto Clipper</h1><p class="s">Video upload karo. Captions wale clips ban ke aayenge.</p>
-<div class="box">
-<div class="row"><button type="button" data-p="gta">GTA 6 preset</button><button type="button" data-p="talk">Stream / Podcast preset</button></div>
-<label>Video file<input id="file" type="file" accept="video/*"></label>
-<label>Aapko kaise clips chahiye? (optional)<input id="prompt" maxlength="300" placeholder="Jaise: sirf funny moments, ya jahan release date ki baat ho"></label>
-<label>Hook text, har clip ke upar (optional)<input id="hooktext" maxlength="60" placeholder="Jaise: GTA 6 NEW TRAILER"></label>
+<header><div class="logo" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M20 4 8.1 15.9M14.5 14.5 20 20M8.1 8.1 12 12"/></svg></div>
+<div><h1>Clipper</h1><p>Stream aur lambi videos se best moments, captions ke saath.</p></div></header>
+
+<section class="card"><details id="hc"><summary id="hsum">Setup check...</summary><ul class="hl" id="hbody" style="margin-top:10px"></ul></details></section>
+<section class="card"><div class="step"><b>1</b>Video kahan se</div>
+<div class="seg" role="group"><button type="button" id="tl" aria-pressed="true">Link</button><button type="button" id="tf" aria-pressed="false">File upload</button></div>
+<div id="bl"><label>YouTube link (har line mein ek, 8 tak)<textarea id="url" rows="2" inputmode="url" placeholder="https://www.youtube.com/watch?v=..."></textarea></label>
+<p class="hint" style="margin-top:8px">Stream mode mein poori video download nahi hoti, sirf best hisse aate hain, to 3-4 ghante ki stream bhi chalegi.</p></div>
+<div id="bf" hidden><label>Video file<input id="file" type="file" accept="video/*"></label></div></section>
+
+<section class="card"><div class="step"><b>2</b>Kaisa edit chahiye</div>
+<div class="chips" role="group"><button type="button" data-p="stackstream">GTA 6 Stream<br>+ Facecam upar</button><button type="button" data-p="stream">GTA 6<br>Live stream</button><button type="button" data-p="gta">GTA 6<br>Trailer / gameplay</button><button type="button" data-p="talk">Podcast<br>Talk video</button></div>
 <div class="row" id="main"></div>
-<details><summary>Aur options (format, captions, effects)</summary><div class="row" id="adv"></div>
-<div class="row"><label class="chk"><input id="hook" type="checkbox" checked>Upar hook title</label>
-<label class="chk"><input id="zoom" type="checkbox">Slow zoom effect</label>
-<label class="chk"><input id="bar" type="checkbox">Progress bar</label></div></details>
-<label>Access code (agar lagaya ho)<input id="code" type="password"></label>
-<button id="go">Clips banao</button></div>
-<div id="st"><div class="bar"><i id="pb"></i></div><p id="msg"></p><p id="err"></p></div>
-<div id="out"></div></main>
+<label>Hook text, clip ke upar (khaali = AI title)<input id="hooktext" maxlength="60" placeholder="Jaise: GTA 6 NEW TRAILER"></label>
+<label>Source credit (optional, neeche chhota likha aata hai)<input id="credit" maxlength="40" placeholder="Jaise: Source: StreamerName"></label></section>
+
+<section class="card" id="fcard" hidden><div class="step"><b>3</b>Facecam kahan hai</div>
+<label class="chk"><input id="autocam" type="checkbox" checked>Facecam khud dhoondho (na mile to neeche ka box use hoga)</label>
+<p class="hint">Gulabi box ko facecam ke upar rakho. Wo hissa clip ke upar aayega, neeche gameplay.</p>
+<div id="pv"><video id="pvv" muted playsinline preload="metadata"></video><img id="pvi" alt=""><div id="fbox"></div></div>
+<div class="row"><label>Frame time (sec)<input id="ft" type="number" value="60" min="0"></label><button class="ghost" id="fget" type="button" style="align-self:end">Frame dikhao</button></div>
+<p class="hint" id="fmsg"></p>
+<div class="chips" id="fpre"><button type="button" data-c="1,71">Neeche-left</button><button type="button" data-c="74,71">Neeche-right</button><button type="button" data-c="1,1">Upar-left</button><button type="button" data-c="74,1">Upar-right</button></div>
+<div class="row"><label>Facecam X<input id="fx" type="range" min="0" max="90" value="74"></label><label>Facecam Y<input id="fy" type="range" min="0" max="90" value="71"></label>
+<label>Facecam chaudai<input id="fw" type="range" min="5" max="60" value="25"></label><label>Facecam unchai<input id="fh" type="range" min="5" max="60" value="28"></label>
+<label>Upar hissa kitna bada<input id="ratio" type="range" min="25" max="55" value="38"></label><label>Gameplay ka focus (left se right)<input id="gx" type="range" min="0" max="100" value="50"></label></div></section>
+<section class="card"><details><summary>Aur options</summary>
+<div style="display:grid;gap:12px">
+<label>Kaise clips chahiye? (optional)<input id="prompt" maxlength="300" placeholder="Jaise: funny reactions, ya jahan chat pagal ho jaye"></label>
+<label>Ya khud time batao (ye likha to auto-pick band)<input id="manual" maxlength="500" placeholder="0:15-0:45, 1:20-1:50, 3:05-3:40"></label>
+<div class="row" id="adv"></div>
+<label>End card text, clip ke last 2.5 sec (optional)<input id="outro" maxlength="50" placeholder="Jaise: Follow for more"></label>
+<div class="row"><label>Saved styles<select id="brands"><option value="">(koi nahi)</option></select></label><label>Naam<input id="bname" placeholder="Jaise: Mera GTA style"></label></div>
+<div class="row"><button class="ghost" id="bsave" type="button">Ye style save karo</button><button class="ghost" id="bdel" type="button">Chuna hua delete karo</button></div>
+<div class="row"><label class="chk"><input id="trim" type="checkbox">Beech ki khaali awaaz hatao</label><label class="chk"><input id="vision" type="checkbox">Gameplay dekhke moment chuno (Gemini key chahiye)</label>
+<label class="chk"><input id="hook" type="checkbox" checked>Upar hook title</label><label class="chk"><input id="zoom" type="checkbox">Slow zoom</label><label class="chk"><input id="bar" type="checkbox">Progress bar</label></div>
+<label>Access code (agar lagaya ho)<input id="code" type="password"></label></div></details></section>
+
+<section class="card" id="st"><div class="bar"><i id="pb"></i></div><p id="msg"></p><p id="err"></p></section>
+<div id="out"></div>
+<section class="card" style="margin-top:20px"><details id="hd"><summary>Purane clips</summary><div id="hist" style="display:grid;gap:8px"></div></details></section></main>
+<div class="cta"><button class="p" id="go">Clips banao</button></div>
 <script>
-const $=i=>document.getElementById(i),sl=ms=>new Promise(r=>setTimeout(r,ms));
-const MAIN=[["kind","Video type",[["talk","Bolne wali (stream, podcast)"],["game","Gameplay / Trailer (GTA 6)"]],"talk"],["n","Kitne clips",[[3,"3"],[5,"5"],[8,"8"],[10,"10"]],5],["len","Clip length",[["15,30","15-30 sec"],["20,45","20-45 sec"],["30,60","30-60 sec"],["45,90","45-90 sec"]],"20,45"],
-["style","Kaise clips chunein",[["viral","Viral / hook wale"],["funny","Funny"],["insight","Useful baatein"],["news","News / announcements"]],"viral"],["aspect","Format",[["9:16","Vertical 9:16 (Shorts/Reels)"],["1:1","Square 1:1"],["4:5","Portrait 4:5"],["16:9","Wide 16:9"]],"9:16"]];
-const ADV=[["layout","Video fit",[["blur","Poori video + blur"],["crop","Center crop"]],"blur"],["res","Quality",[[480,"480p (fast)"],[720,"720p"],[1080,"1080p (slow)"]],720],
-["cap","Caption style",[["gold","Bold + peela highlight"],["white","Sirf white"],["box","Box ke andar"],["none","Captions nahi"]],"gold"],["pos","Caption jagah",[["bottom","Neeche"],["center","Beech"],["top","Upar"]],"bottom"],
-["wpl","Ek baar mein shabd",[[1,"1"],[2,"2"],[3,"3"],[4,"4"]],3],["letters","Caption letters",[["upper","BADE (UPPERCASE)"],["normal","Normal"]],"upper"],["hl","Highlight colour",[["gold","Peela"],["green","Hara"],["red","Laal"],["cyan","Cyan"]],"gold"],["size","Caption size",[["s","Chhota"],["m","Medium"],["l","Bada"]],"m"],["script","Caption script",[["auto","Jaisa bola gaya"],["roman","Hinglish (Roman) try karo"]],"auto"]];
-const mk=(a,box)=>a.forEach(([id,l,o,d])=>{box.insertAdjacentHTML("beforeend",`<label>${l}<select id="${id}">${o.map(([v,t])=>`<option value="${v}"${v==d?" selected":""}>${t}</option>`).join("")}</select></label>`)});
+const $=i=>document.getElementById(i),sl=ms=>new Promise(r=>setTimeout(r,ms)),esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const MAIN=[["n","Kitne clips",[[3,"3"],[5,"5"],[8,"8"],[10,"10"]],5],["len","Clip length",[["15,30","15-30 sec"],["20,45","20-45 sec"],["30,60","30-60 sec"],["45,90","45-90 sec"],["90,150","90-150 sec (parts mein todne ke liye)"]],"20,45"],
+["layout","Video fit",[["blur","Poori video + blur"],["crop","Full screen crop"],["stack","Facecam upar + gameplay neeche"]],"blur"],["aspect","Format",[["9:16","Vertical 9:16 (Shorts/Reels)"],["1:1","Square 1:1"],["4:5","Portrait 4:5"],["16:9","Wide 16:9"]],"9:16"],["res","Quality / speed",[[480,"480p (sabse fast)"],[540,"540p (fast)"],[720,"720p (best balance)"],[1080,"1080p (bahut slow)"]],540]];
+const ADV=[["kind","Video type",[["stream","Live stream (chat / loud moments)"],["game","Gameplay / Trailer"],["talk","Bolne wali video"]],"stream"],["style","Kaise clips chunein",[["viral","Viral / hook wale"],["funny","Funny"],["insight","Useful baatein"],["news","News / announcements"]],"viral"],
+["lang","Video ki language",[["auto","Auto"],["hi","Hindi / Hinglish"],["en","English"]],"auto"],["model","Transcript accuracy",[["best","Best (zyada sahi)"],["fast","Fast"]],"best"],
+["cap","Caption style",[["gold","Bold + highlight"],["pop","Pop (highlight shabd bada)"],["white","Sirf white"],["box","Box ke andar"],["none","Captions nahi"]],"gold"],
+["pos","Caption jagah",[["seam","Facecam aur gameplay ke beech"],["bottom","Neeche"],["center","Beech"],["top","Upar"]],"bottom"],["wpl","Ek baar mein shabd",[[1,"1"],[2,"2"],[3,"3"],[4,"4"]],2],["letters","Caption letters",[["upper","BADE (UPPERCASE)"],["normal","Normal"]],"upper"],
+["parts","Lambi clip ko parts mein todo",[[0,"Nahi"],[30,"Har part ~30 sec"],[45,"Har part ~45 sec"],[60,"Har part ~60 sec"]],0],["hl","Highlight colour",[["gold","Peela"],["green","Hara"],["red","Laal"],["cyan","Cyan"]],"gold"],["size","Caption size",[["s","Chhota"],["m","Medium"],["l","Bada"]],"m"],["script","Caption script",[["auto","Jaisa bola gaya"],["roman","Hinglish (Roman) try karo"]],"auto"]];
+const mk=(a,box)=>a.forEach(([id,l,o,d])=>box.insertAdjacentHTML("beforeend",`<label>${l}<select id="${id}">${o.map(([v,t])=>`<option value="${v}"${v==d?" selected":""}>${t}</option>`).join("")}</select></label>`));
 mk(MAIN,$("main"));mk(ADV,$("adv"));
-const IDS=[...MAIN,...ADV].map(a=>a[0]).concat(["prompt","hooktext"]);
-const save=()=>{try{localStorage.s=JSON.stringify(Object.fromEntries(IDS.map(k=>[k,$(k).value])))}catch(e){}};
-try{const s=JSON.parse(localStorage.s||"{}");IDS.forEach(k=>{if(s[k]!=null)$(k).value=s[k]})}catch(e){}
+let SRC="link";const setSrc=s=>{SRC=s;$("tl").setAttribute("aria-pressed",s=="link");$("tf").setAttribute("aria-pressed",s=="file");$("bl").hidden=s!="link";$("bf").hidden=s!="file"};
+$("tl").onclick=()=>setSrc("link");$("tf").onclick=()=>setSrc("file");
+const IDS=[...MAIN,...ADV].map(a=>a[0]).concat(["prompt","hooktext","manual","credit","url","fx","fy","fw","fh","ratio","gx","outro"]);
+const save=()=>{try{localStorage.s3=JSON.stringify(Object.fromEntries(IDS.map(k=>[k,$(k).value])))}catch(e){}};
+try{const s=JSON.parse(localStorage.s3||"{}");IDS.forEach(k=>{if(s[k]!=null)$(k).value=s[k]});$("code").value=localStorage.code||""}catch(e){}
 document.addEventListener("change",save);
-const PRE={gta:{kind:"game",aspect:"9:16",res:720,layout:"blur",n:5,len:"20,45"},talk:{kind:"talk",cap:"gold",letters:"upper",wpl:2,n:5}};
-document.querySelectorAll("[data-p]").forEach(b=>b.onclick=()=>{Object.entries(PRE[b.dataset.p]).forEach(([k,v])=>$(k).value=v);$("zoom").checked=$("bar").checked=b.dataset.p=="gta";save()});
-$("out").onclick=e=>{const b=e.target.closest(".cp");if(b){navigator.clipboard.writeText(decodeURIComponent(b.dataset.t));b.textContent="Copy ho gaya"}};
-try{$("code").value=localStorage.code||""}catch(e){}
+const PRE={stackstream:{kind:"stream",aspect:"9:16",layout:"stack",pos:"seam",n:5,len:"20,45",cap:"pop",letters:"upper",wpl:2},stream:{kind:"stream",aspect:"9:16",layout:"blur",n:5,len:"20,45",cap:"gold",letters:"upper",wpl:2},gta:{kind:"game",aspect:"9:16",layout:"crop",pos:"bottom",n:5,len:"20,45"},talk:{kind:"talk",aspect:"9:16",layout:"blur",cap:"gold",letters:"upper",wpl:2,n:5}};
+const setP=p=>{try{localStorage.pre=p}catch(e){}Object.entries(PRE[p]).forEach(([k,v])=>$(k).value=v);$("zoom").checked=p=="gta";$("bar").checked=p!="talk";$("trim").checked=p=="talk";document.querySelectorAll("[data-p]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.p==p));save();fshow()};
+document.querySelectorAll("[data-p]").forEach(b=>b.onclick=()=>setP(b.dataset.p));
+const fbox=()=>{const b=$("fbox").style;b.left=$("fx").value+"%";b.top=$("fy").value+"%";b.width=$("fw").value+"%";b.height=$("fh").value+"%"};
+const fshow=()=>{$("fcard").hidden=$("layout").value!="stack";fbox()};
+["fx","fy","fw","fh"].forEach(k=>$(k).oninput=fbox);$("layout").addEventListener("change",fshow);
+document.querySelectorAll("[data-c]").forEach(b=>b.onclick=()=>{const[x,y]=b.dataset.c.split(",");$("fx").value=x;$("fy").value=y;fbox();save()});
+$("file").onchange=()=>{const f=$("file").files[0];if(!f)return;const v=$("pvv");v.src=URL.createObjectURL(f);$("pvi").style.display="none";v.style.display="block";v.onloadedmetadata=()=>{v.currentTime=Math.min(+$("ft").value||10,v.duration*.9)}};
+$("fget").onclick=async()=>{if(SRC=="file"){const v=$("pvv");if(v.src)v.currentTime=+$("ft").value||0;return}
+ const u=$("url").value.trim().split(/[\s,]+/)[0];if(!u){$("fmsg").textContent="Pehle link daalo";return}
+ $("fmsg").textContent="Frame aa raha hai (10-30 sec lag sakte hain)...";$("fget").disabled=true;
+ try{const r=await fetch("/api/frame",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({url:u,t:+$("ft").value||0,code:$("code").value})});
+  if(!r.ok)throw new Error((await r.json()).detail);const i=$("pvi");i.src=URL.createObjectURL(await r.blob());i.style.display="block";$("pvv").style.display="none";$("fmsg").textContent=""}
+ catch(e){$("fmsg").textContent=e.message||"Frame nahi aaya. Facecam ki jagah andaze se rakh do."}$("fget").disabled=false};
+if(!localStorage.s3)setP("stackstream");else{const p=localStorage.pre;document.querySelectorAll("[data-p]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.p==p));fshow()}
+const getv=k=>{const e=$(k);return e.type=="checkbox"?e.checked:e.value},setv=(k,v)=>{const e=$(k);if(e.type=="checkbox")e.checked=!!v;else e.value=v};
+const BK=["cap","hl","size","letters","wpl","pos","layout","aspect","fx","fy","fw","fh","ratio","gx","credit","outro","parts","trim","autocam","vision","bar","zoom","hook"];
+const brands=()=>{try{return JSON.parse(localStorage.brands||"{}")}catch(e){return{}}};
+const bfill=()=>{$("brands").innerHTML='<option value="">(koi nahi)</option>'+Object.keys(brands()).map(n=>`<option>${esc(n)}</option>`).join("")};
+$("bsave").onclick=()=>{const n=$("bname").value.trim();if(!n)return;const b=brands();b[n]=Object.fromEntries(BK.map(k=>[k,getv(k)]));localStorage.brands=JSON.stringify(b);bfill();$("brands").value=n};
+$("brands").onchange=()=>{const s=brands()[$("brands").value];if(!s)return;BK.forEach(k=>{if(k in s)setv(k,s[k])});fbox();fshow();save()};
+$("bdel").onclick=()=>{const b=brands();delete b[$("brands").value];localStorage.brands=JSON.stringify(b);bfill()};bfill();
+const opts=()=>{const[a,b]=$("len").value.split(","),o={minlen:a,maxlen:b,code:$("code").value,prompt:$("prompt").value,hooktext:$("hooktext").value,manual:$("manual").value,credit:$("credit").value,url:SRC=="link"?$("url").value:"",
+ hook:$("hook").checked?1:0,zoom:$("zoom").checked?1:0,bar:$("bar").checked?1:0,parts:$("parts").value,outro:$("outro").value,trim:$("trim").checked?1:0,vision:$("vision").checked?1:0,autocam:$("autocam").checked?1:0};
+ ["n","kind","style","aspect","layout","res","cap","pos","wpl","letters","hl","size","script","lang","model","fx","fy","fw","fh","ratio","gx"].forEach(k=>o[k]=$(k).value);return o};
+(async()=>{try{const x=await (await fetch("/api/health")).json();
+ const L=[[x.ffmpeg,"Video edit karne ka tool (ffmpeg)","zaruri: install karo"],[x.groq,"Groq key (zaruri)","console.groq.com se free key lo, .env mein GROQ_API_KEY= likho"],
+ [x.gemini,"Gemini key (optional)","gameplay dekhna aur facecam dhoondhna. aistudio.google.com, .env mein GEMINI_API_KEY="],[x.ytdlp,"YouTube link support","sirf PC/phone pe chalta hai, cloud pe nahi"],[x.opencv,"Facecam pehchan (OpenCV, optional)","PC pe install hota hai, na ho to Gemini use hota hai"]];
+ $("hbody").innerHTML=L.map(([ok,t,h])=>`<li><b class="${ok?"ok":"no"}">${ok?"Theek hai":"Nahi hai"}</b> ${t}${ok?"":` <span class="hint">- ${h}</span>`}</li>`).join("");
+ const need=!x.ffmpeg||!x.groq;$("hsum").textContent="Setup check: "+(need?"kuch zaruri cheez missing hai":"zaruri sab theek hai");if(need)$("hc").open=true}catch(e){$("hsum").textContent="Setup check: server se baat nahi hui"}})();
+let MULTI=false;const OUT=$("out");
 async function upload(file,code){
- const f=new FormData();f.append("name",file.name);f.append("code",code);
- const r=await fetch("/api/upload/init",{method:"POST",body:f});
+ const r=await fetch("/api/upload/init",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name:file.name,code})});
  if(!r.ok)throw new Error((await r.json()).detail||"Upload shuru nahi hua");
  const {id}=await r.json(),S=8*1048576,N=Math.max(1,Math.ceil(file.size/S));
  for(let i=0;i<N;i++){let ok=false;
@@ -66,21 +148,42 @@ async function upload(file,code){
   if(!ok)throw new Error("Upload beech mein fail hua. Internet check karke dobara try karo");
   const p=Math.round((i+1)/N*100);$("msg").textContent=`Upload ho raha hai: ${p}% (${Math.min((i+1)*S,file.size)/1048576|0} / ${file.size/1048576|0} MB)`;$("pb").style.width=Math.max(2,p*.3)+"%"}
  return id}
-$("go").onclick=async()=>{
- const file=$("file").files[0];if(!file){$("st").style.display="block";$("err").textContent="Pehle video file chuno";return}
- $("go").disabled=true;$("out").innerHTML="";$("err").textContent="";$("st").style.display="block";
- try{localStorage.code=$("code").value}catch(e){}
- try{
-  const id=await upload(file,$("code").value),fd=new FormData(),[a,b]=$("len").value.split(",");
-  fd.append("upload_id",id);fd.append("minlen",a);fd.append("maxlen",b);fd.append("code",$("code").value);
-  ["n","style","aspect","layout","res","cap","pos","wpl","letters","hl","size","script"].forEach(k=>fd.append(k,$(k).value));
-  fd.append("prompt",$("prompt").value);fd.append("hooktext",$("hooktext").value);fd.append("kind",$("kind").value);fd.append("hook",$("hook").checked?1:0);fd.append("zoom",$("zoom").checked?1:0);fd.append("bar",$("bar").checked?1:0);
-  const r=await fetch("/api/jobs",{method:"POST",body:fd});
-  if(!r.ok)throw new Error((await r.json()).detail||"Job shuru nahi hua");
-  for(;;){await sl(2500);const s=await (await fetch("/api/jobs/"+id)).json();
-   $("msg").textContent=s.msg;$("pb").style.width=s.pct+"%";
-   if(s.status=="error")throw new Error(s.msg);
-   if(s.status=="done"){$("out").innerHTML=s.clips.map(c=>`<div class="clip"><video src="${c.url}" controls playsinline preload="metadata"></video><b>${c.title.replace(/</g,"&lt;")}</b><br><small>Score ${c.score}</small><br>${c.meta?`<pre class="meta">${c.meta.replace(/</g,"&lt;")}</pre><button class="cp" data-t="${encodeURIComponent(c.meta)}">Title aur hashtags copy karo</button><br>`:""}<a href="${c.url}" download>Download</a></div>`).join("")+`<a href="/api/jobs/${id}/zip">Sab clips ZIP mein download karo</a>`;break}}
- }catch(e){$("err").textContent=e.message}
- $("go").disabled=false};
+async function poll(id,pre=""){const t0=Date.now();for(;;){await sl(2500);const s=await (await fetch("/api/jobs/"+id)).json(),m=Math.floor((Date.now()-t0)/60000);
+ $("msg").textContent=pre+s.msg+(m?` (${m} min se chal raha hai)`:"");$("pb").style.width=s.pct+"%";
+ if(s.status=="error")throw new Error(s.msg);if(s.status=="done")return s}}
+const fmt=t=>{t=Math.round(t);const h=t/3600|0,m=t%3600/60|0,s=t%60,p=n=>String(n).padStart(2,"0");return(h?h+":":"")+p(m)+":"+p(s)};
+const card=(id,c,k)=>`<div class="clip"><video src="${c.url}" controls playsinline preload="metadata"></video>
+<h3>${esc(c.title)}</h3><div class="tags"><span>Score ${c.score}</span><span>${fmt(c.start)} se ${fmt(c.end)}</span></div>
+${c.why?`<p class="hint">Kyun chuna: ${esc(c.why)}</p>`:""}${c.meta?`<pre class="meta">${esc(c.meta)}</pre>`:""}
+<div class="acts"><a class="p" href="${c.url}" download>Download</a>${c.meta?`<button class="ghost cp" data-t="${encodeURIComponent(c.meta)}">Title copy</button>`:""}</div>
+<details><summary>Changes karo</summary><div style="display:grid;gap:10px"><div class="row"><label>Start (sec)<input id="${id}_s${k}" type="number" step="0.5" value="${c.start}"></label><label>End (sec)<input id="${id}_e${k}" type="number" step="0.5" value="${c.end}"></label></div>
+<label>Hook text (sirf is clip ke liye)<input id="${id}_h${k}" value="${esc(c.hook||"")}"></label>
+<label>Captions text (galat shabd yahan theek karo)<textarea id="${id}_t${k}" rows="4">${esc(c.text)}</textarea></label>
+<button class="ghost rd" data-j="${id}" data-k="${k}">Ye clip dobara banao</button></div></details></div>`;
+function show(id,s){let blk=$("jb"+id);if(!blk){blk=document.createElement("div");blk.id="jb"+id;OUT.appendChild(blk)}
+ blk.innerHTML=`${MULTI?`<h2 class="jh">${esc(s.label||id)}</h2>`:""}${s.info?`<p class="hint">${esc(s.info)}</p>`:""}<div class="grid">${s.clips.map((c,k)=>card(id,c,k)).join("")}</div>
+<div class="tools"><button class="ghost cp" data-redoall="${id}">Options badal ke sab clips dobara banao</button><a href="/api/jobs/${id}/zip">Sab clips ZIP</a></div>
+<p class="note">Dusre creators ke content pe commentary ya credit ke bina daalna copyright claim la sakta hai. Source credit aur apni awaaz zaroor daalo.</p>`}
+async function busy(fn){$("go").disabled=true;$("err").textContent="";$("st").style.display="grid";try{await fn()}catch(e){$("err").textContent=e.message}$("go").disabled=false;hist()}
+async function redo(id,x){const r=await fetch(`/api/jobs/${id}/redo`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({...opts(),...x})});
+ if(!r.ok)throw new Error((await r.json()).detail||"Redo shuru nahi hua");await poll(id);show(id,await (await fetch("/api/jobs/"+id)).json())}
+OUT.onclick=e=>{const b=e.target.closest(".cp,.rd");if(!b)return;
+ if(b.dataset.t){navigator.clipboard.writeText(decodeURIComponent(b.dataset.t));b.textContent="Copy ho gaya";return}
+ if(b.dataset.redoall)return busy(()=>redo(b.dataset.redoall,{k:-1}));
+ const id=b.dataset.j,k=+b.dataset.k;busy(()=>redo(id,{k,start:$(id+"_s"+k).value,end:$(id+"_e"+k).value,cliphook:$(id+"_h"+k).value,text:$(id+"_t"+k).value}))};
+async function hist(){try{const r=await fetch("/api/history?code="+encodeURIComponent($("code").value));if(!r.ok)return;const rows=await r.json();
+ $("hist").innerHTML=rows.length?rows.map(x=>`<button class="ghost hb" data-id="${x.id}">${esc(x.label).slice(0,60)} · ${x.n} clips · ${new Date(x.ts*1000).toLocaleString()}</button>`).join(""):'<p class="hint">Abhi koi purana clip nahi.</p>'}catch(e){}}
+$("hist").onclick=async e=>{const b=e.target.closest(".hb");if(!b)return;const s=await (await fetch("/api/jobs/"+b.dataset.id)).json();OUT.innerHTML="";MULTI=true;show(b.dataset.id,s);OUT.scrollIntoView({behavior:"smooth"})};
+hist();
+$("go").onclick=()=>busy(async()=>{
+ OUT.innerHTML="";try{localStorage.code=$("code").value}catch(e){}
+ const body=opts();let ids;
+ if(SRC=="link"){if(!/https?:\/\//.test($("url").value))throw new Error("YouTube link daalo")}
+ else{const file=$("file").files[0];if(!file)throw new Error("Pehle video file chuno");const id=await upload(file,$("code").value);body.upload_id=id}
+ $("msg").textContent="Shuru ho raha hai";$("pb").style.width="3%";
+ const r=await fetch("/api/jobs",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+ if(!r.ok)throw new Error((await r.json()).detail||"Job shuru nahi hua");
+ ids=(await r.json()).ids;MULTI=ids.length>1;const errs=[];
+ for(let i=0;i<ids.length;i++){try{show(ids[i],await poll(ids[i],MULTI?`Link ${i+1}/${ids.length}: `:""))}catch(e){errs.push((MULTI?`Link ${i+1}: `:"")+e.message)}}
+ OUT.scrollIntoView({behavior:"smooth"});if(errs.length)throw new Error(errs.join(" | "))});
 </script></body></html>
